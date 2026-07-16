@@ -19,39 +19,90 @@ function getDateSeed() {
 
 const PASSAGES = [
     "the quick brown fox jumps over the lazy dog",
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "0",
+    "pack my box with five dozen liquor jugs",
+    "sphinx of black quartz judge my vow",
+    "how quickly daft jumping zebras vex",
+    "bright vixens jump dozy fowl quack",
+    "waltz bad nymph for quick jigs vex",
+    "crazy fredrick bought many very exquisite opal jewels",
+    "the sun rises above the quiet mountains every morning",
+    "a small bird flies across the bright blue sky",
+    "the ocean waves crash against the sandy shore",
+    "trees grow tall when they receive enough sunlight",
+    "the stars shine brightly in the night sky",
+    "a gentle breeze moves through the green forest",
+    "the river flows slowly between the rocky cliffs",
+    "clouds drift peacefully across the endless sky",
+    "practice makes progress when you challenge yourself every day",
+    "typing faster requires accuracy patience and consistent practice",
+    "small improvements can create amazing results over time",
+    "learning new skills takes effort but becomes easier with practice",
+    "every mistake is an opportunity to improve your abilities",
+    "focus on accuracy before trying to increase your speed",
+    "great achievements are built through many small steps",
+    "javascript allows developers to create interactive websites",
+    "computers process information using complex systems and algorithms",
+    "technology continues to change the way people communicate",
+    "programming requires creativity problem solving and logical thinking",
+    "software engineers build tools that help people solve problems",
+    "artificial intelligence is changing many industries around the world",
+    "the internet connects billions of people across the planet",
+    "the library was filled with books about science history and art",
+    "the explorer traveled across the desert searching for ancient ruins",
+    "the scientist carefully measured the results of the experiment",
+    "the engineer designed a machine that could solve difficult tasks",
+    "the artist painted a beautiful picture using many different colors",
+    "the musician played a melody that filled the entire room",
+    "never underestimate the power of curiosity and imagination",
+    "a good question can lead to an incredible discovery",
+    "knowledge grows when people share ideas with each other",
+    "the future belongs to those who prepare for tomorrow",
+    "success comes from dedication discipline and determination",
+    "walking through the forest revealed many hidden wonders",
+    "the mysterious castle stood beyond the ancient stone bridge",
+    "the adventurous traveler explored unknown lands and discovered secrets",
+    "the clever inventor created a useful device from simple materials",
+    "the brave knight protected the kingdom from danger",
+    "one two three four five six seven eight nine ten",
+    "ten tiny turtles traveled toward the tropical river",
+    "five friendly frogs found fresh flowers near the pond",
+    "seven silent sailors sailed across the stormy sea",
+    "sally sells seashells by the seashore",
+    "peter piper picked a peck of pickled peppers",
+    "how much wood would a woodchuck chuck if a woodchuck could chuck wood",
+    "betty botter bought some butter but she said the butter was bitter so she bought some better butter"
 ]
 
 let todaysPassage;
 let targetWPM;
 let mode = "daily";
+let difficulty = "easy"
 
-function generateTest() {
+async function generateTest() {
     let rng;
     if (mode === "daily") {
         rng = mulberry32(getDateSeed());
     } else {
         rng = mulberry32(Date.now());
     }
-    const passageIndex = Math.floor(rng() * PASSAGES.length);
-    todaysPassage = PASSAGES[passageIndex]
+    if (difficulty === "hard") {
+        todaysPassage = await getWikipediaPassage();
+    }
+    else {
+        const passageIndex = Math.floor(rng() * PASSAGES.length);
+        todaysPassage = PASSAGES[passageIndex];
+    }
     targetWPM = Math.floor(1 + rng() * 79) // 1-80 wpm
     document.getElementById("target-display").textContent = `target: ${targetWPM} wpm`
 }
 
-generateTest();
-checkDaily();
-
 const passage = document.getElementById("passage");
+
+(async () => {
+    await generateTest();
+    loadPassage();
+    checkDaily();
+})();
 
 function loadPassage() {
     passage.innerHTML = ""
@@ -71,10 +122,11 @@ let spans;
 let finished = false;
 let attempts = 0;
 const maxAttempts = 5;
-let resultHistory = []
-let accuracyHistory = []
+let resultHistory = [];
+let accuracyHistory = [];
 let currentWPM = 0;
-let currentAccuracy = 0
+let currentAccuracy = 0;
+let keystrokeHistory = [];
 
 loadPassage();
 updateDisplay();
@@ -94,6 +146,10 @@ document.addEventListener("keydown", e => {
         }
         return;
     }
+    keystrokeHistory.push({
+        char: e.key,
+        position:typed.length
+    });
     typed += e.key
     updateDisplay();
     if (typed.length === todaysPassage.length)
@@ -104,7 +160,7 @@ function finishTest() {
     finished = true;
     const elapsed = Date.now() - startTime;
     const wpm = calculateWPM(
-        todaysPassage.length,
+        keystrokeHistory.length,
         elapsed
     );
     const accuracy = calculateAccuracy();
@@ -174,6 +230,7 @@ function resetGame() {
     typed = "";
     startTime = null;
     finished = false;
+    keystrokeHistory = [];
     document.getElementById("results").hidden = true;
     document.getElementById("game").hidden = false;
     document.getElementById("game").hidden = false;
@@ -195,11 +252,13 @@ function showEndScreen(reason) {
     document.getElementById("results").innerHTML = `
     <h2>${title}</h2>
     <p>${message}</p>
+    <hr>
     <p>${resultHistory.map((result, i) => `
         <p>
             ${i + 1}. ${result} ${accuracyHistory[i]}%
         </p>
     `).join("")}
+    <hr>
     <p>
         average accuracy:
         ${Math.round(accuracyHistory.reduce((a,b)=>a+b,0) / accuracyHistory.length)}%
@@ -208,7 +267,7 @@ function showEndScreen(reason) {
     showModeButtons(true);
     if (mode === "daily") {
         localStorage.setItem("dailyComplete", JSON.stringify({
-            date: new Date().toISOString().slice(0,10),
+            date: getToday(),
             results: resultHistory,
             accuracy: accuracyHistory,
             target: targetWPM
@@ -224,12 +283,12 @@ function calculateWPM(characters, elapsedMs) {
 function calculateAccuracy() {
     if (typed.length === 0) return 0;
     let correct = 0;
-    for (let i = 0; i < typed.length; i++) {
-        if (typed[i] === todaysPassage[i]) {
+    keystrokeHistory.forEach(key => {
+        if (key.char === todaysPassage[key.position]) {
             correct++;
         }
-    }
-    return Math.round((correct/typed.length) * 100);
+    })
+    return Math.round((correct / keystrokeHistory.length) * 100);
 }
 
 function getBand(wpm, target) {
@@ -244,11 +303,14 @@ function getBand(wpm, target) {
 }
 
 function updateAttemptDisplay() {
+    document.getElementById("mode-display")
+        .textContent = `${mode} mode (${difficulty})`;
     if (mode === "unlimited") {
-        document.getElementById("attempt-display").textContent = `unlimited mode`
+        document.getElementById("attempt-display")
+            .textContent = "unlimited mode";
     } else {
-    document.getElementById("attempt-display").textContent = 
-        `attempt: ${attempts + 1} / ${maxAttempts}`;
+        document.getElementById("attempt-display")
+            .textContent = `attempt ${attempts + 1} / ${maxAttempts}`;
     }
 }
 
@@ -259,7 +321,7 @@ document.getElementById("share-btn").addEventListener("click", async () => {
     })
     const title = 
         mode === "daily"
-            ? `wpmdle ${new Date().toISOString().slice(0,10)}`
+            ? `wpmdle ${getToday()}`
             : "wpmdle unlimited";
     const shareText = 
 `${title}
@@ -285,11 +347,11 @@ function updateDisplay() {
     })
 }
 
-document.getElementById("daily-btn").addEventListener("click", () => {
+document.getElementById("daily-btn").addEventListener("click", async () => {
     const saved = JSON.parse(
         localStorage.getItem("dailyComplete")
     );
-    const today = new Date().toISOString().slice(0,10)
+    const today = getToday()
     if (saved && saved.date === today) {
         checkDaily();
         return;
@@ -298,7 +360,7 @@ document.getElementById("daily-btn").addEventListener("click", () => {
     attempts = 0;
     resultHistory = [];
     accuracyHistory = [];
-    generateTest();
+    await generateTest();
     loadPassage();
     document.getElementById("share-btn").hidden = true
     resetGame();
@@ -307,6 +369,8 @@ document.getElementById("daily-btn").addEventListener("click", () => {
 function showModeButtons(show) {
     document.getElementById("unlimited-btn").hidden = !show;
     document.getElementById("daily-btn").hidden = !show;
+    document.getElementById("easy-btn").hidden = !show;
+    document.getElementById("hard-btn").hidden = !show;
 }
 
 function checkDaily() {
@@ -314,7 +378,7 @@ function checkDaily() {
         localStorage.getItem("dailyComplete")
     );
     if (!saved) return;
-    const today = new Date().toISOString().slice(0,10);
+    const today = getToday();
     if (saved.date !== today) {
         localStorage.removeItem("dailyComplete");
         return;
@@ -334,15 +398,83 @@ function checkDaily() {
         </p>`;
 }
 
-function startUnlimited() {
+async function startUnlimited() {
     mode = "unlimited";
     attempts = 0;
     resultHistory = [];
     accuracyHistory = [];
     document.getElementById("share-btn").hidden = true;
-    generateTest();
+    await generateTest();
     loadPassage();
     resetGame();
 }
 
 document.getElementById("unlimited-btn").addEventListener("click", startUnlimited);
+
+document.getElementById("easy-btn").onclick = () => {
+    document.activeElement.blur();
+    startGame("easy");
+}
+
+document.getElementById("hard-btn").onclick = () => {
+    document.activeElement.blur();
+    startGame("hard");
+}
+
+async function getWikipediaPassage() {
+    const url = "https://en.wikipedia.org/api/rest_v1/page/random/summary"
+    const response = await fetch(url);
+    const data = await response.json();
+    return cleanWikipediaText(data.extract);
+}
+
+function cleanWikipediaText(text) {
+    return text
+        .replace(/\n/g, " ")
+        .replace(/\s/g, " ")
+        .replace(/[–—]/g, "-")
+        .replace(/[‘’]/g, "'")
+        .replace(/[“”]/g, '"')
+        .replace(/…/g, "...") 
+        .trim()
+        .slice(0, 250)
+}
+
+function updateModeDisplay() {
+    document.getElementById("mode-display").textContent = `${mode} mode (${difficulty})`
+}
+
+async function startGame(newDifficulty) {
+    difficulty = newDifficulty
+    const saved = JSON.parse(
+        localStorage.getItem("dailyComplete")
+    )
+    const today = new Date()
+        .toISOString()
+        .slice(0,10);
+    if (saved && saved.date === today) {
+        mode = "unlimited";
+    } else {
+        mode = "daily";
+    }
+    attempts = 0;
+    resultHistory = [];
+    accuracyHistory = [];
+    keystrokeHistory = [];
+    typed = "";
+    startTime = null;
+    finished = false;
+    document.getElementById("share-btn").hidden = true;
+    await generateTest();
+    loadPassage();
+    document.body.focus()
+    document.getElementById("results").hidden = true;
+    document.getElementById("game").hidden = false;
+    showModeButtons(false);
+    updateAttemptDisplay();
+}
+
+function getToday() {
+    return new Date()
+        .toLocaleDateString("en-CA");
+}

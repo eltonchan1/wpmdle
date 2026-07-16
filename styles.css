@@ -1,20 +1,128 @@
+* {
+    font-family: "JetBrains Mono", monospace;
+}
+
 #passage {
-    font-size: 32px;
-    letter-spacing: 1px;
+    margin-top: 35px;
+    font-size: 34px;
+    line-height: 1.8;
+    color: #646669;
+    user-select: none;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .correct {
-    color: white;
+    color: #d1d0c5
 }
 
 .incorrect {
-    color: #ff5555
+    color: #ca4754;
 }
 
 .current {
-    border-bottom: 2px solid white
+    border-left: 2px solid #e2b714;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%,
+    50% {
+        border-color: e2b714;
+    }
+    51%,
+    100% {
+        border-color: transparent;
+    }
 }
 
 span {
     color: #666
 }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #323437;
+    color: #d1d0c5;
+    font-family: "JetBrainsMono", monospace;
+}
+
+h1 {
+    margin-top: 50px;
+    margin-bottom: 40px;
+    color: #e2b714;
+    font-size: 48px;
+    font-weight: 700px;
+}
+
+#game,
+#results {
+    width: min(900px, 90vw);
+}
+
+#target-display,
+#attempt-display {
+    color: #646669;
+    font-size: 18px;
+    margin: 8px 0;
+}
+
+button {
+    background: #44464a;
+    color: #d1d0c5;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 26px;
+    font-size: 16px;
+    font-family: inherit;
+    cursor: pointer;
+    transition:
+        background .2s,
+        color .2s,
+        transform .15s;
+}
+
+button:hover {
+    background: #e2b714;
+    color: #323437;
+}
+
+button:active {
+    transform: scale(.97);
+}
+
+button:disabled {
+    opacity: .5;
+    cursor: default;
+}
+
+.buttons {
+    display: flex;
+    gap: 12px
+}
+
+#results {
+    text-align: center;
+}
+
+#results h2 {
+    color: #e2b714;
+    font-size: 36px;
+}
+
+#results p {
+    color: #d1d0c5;
+    font-size: 20px;
+}
+
+hr {
+    border: none;
+    height: 1px;
+    background: #555;
+    margin: 25px 0;
+}
+

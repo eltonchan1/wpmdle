@@ -16,10 +16,14 @@
     </style>
     <script src="script.js" defer></script>
     <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100..800&display=swap" rel="stylesheet">
 </head>
-<body>
+<body tabindex="0">
     <h1>wpmdle</h1>
     <div id="game">
+        <p id="mode-display">mode</p>
         <p id="target-display">target: -- wpm</p>
         <p id="attempt-display">attempt: x / x</p>
         <div id="passage"></div>
@@ -30,9 +34,13 @@
         <p id="emoji-result"></p>
         <button id="next-btn">next attempt</button>
     </div>
-    <button id="share-btn" hidden>share results</button>
-    <button id="daily-btn">daily</button>
-    <button id="unlimited-btn">unlimited</button>  
+    <div class="buttons">
+        <button id="share-btn" hidden>share results</button>
+        <button id="daily-btn">daily</button>
+        <button id="unlimited-btn">unlimited</button> 
+        <button id="easy-btn">easy</button>
+        <button id="hard-btn">hard</button>
+    </div>
 
     <script>
         console.log("wired up");
