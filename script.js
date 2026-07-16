@@ -19,25 +19,55 @@ function getDateSeed() {
 
 const PASSAGES = [
     "the quick brown fox jumps over the lazy dog",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "0",
 ]
 
-const rng = mulberry32(getDateSeed());
-const passageIndex = Math.floor(rng() * PASSAGES.length);
-const todaysPassage = PASSAGES[passageIndex];
-const targetWPM = Math.floor(1 + rng() * 79); // 1 to 80
+let todaysPassage;
+let targetWPM;
+let mode = "daily";
+
+function generateTest() {
+    let rng;
+    if (mode === "daily") {
+        rng = mulberry32(getDateSeed());
+    } else {
+        rng = mulberry32(Date.now());
+    }
+    const passageIndex = Math.floor(rng() * PASSAGES.length);
+    todaysPassage = PASSAGES[passageIndex]
+    targetWPM = Math.floor(1 + rng() * 79) // 1-80 wpm
+    document.getElementById("target-display").textContent = `target: ${targetWPM} wpm`
+}
+
+generateTest();
+checkDaily();
 
 const passage = document.getElementById("passage");
-todaysPassage.split("").forEach(letter => {
-    const span = document.createElement("span")
-    span.textContent = letter;
-    passage.appendChild(span);
-})
+
+function loadPassage() {
+    passage.innerHTML = ""
+    todaysPassage.split("").forEach(letter => {
+        const span = document.createElement("span");
+        span.textContent = letter;
+        passage.appendChild(span);
+    });
+    spans = passage.querySelectorAll("span");
+}
 
 document.getElementById("target-display").textContent = `target: ${targetWPM} wpm`;
 
 let typed = "";
 let startTime = null;
-const spans = passage.querySelectorAll("span");
+let spans;
 let finished = false;
 let attempts = 0;
 const maxAttempts = 5;
@@ -46,6 +76,7 @@ let accuracyHistory = []
 let currentWPM = 0;
 let currentAccuracy = 0
 
+loadPassage();
 updateDisplay();
 updateAttemptDisplay();
 
@@ -98,7 +129,7 @@ function showResultsScreen(wpm, accuracy) {
         <h3>history</h3>
         ${resultHistory.map((result, i) => `
             <p>
-            ${i + 1}, ${result}
+            ${i + 1}. ${result}
             ${accuracyHistory[i]}%
             </p>
         `).join("")}
@@ -127,22 +158,24 @@ function showResultsScreen(wpm, accuracy) {
 
 document.addEventListener("click", e => {
     if (!e.target.matches("#next-btn")) return;
-    if (getBand(currentWPM, targetWPM).won) {
+    if(getBand(currentWPM, targetWPM).won) {
         showEndScreen("win");
-        return
+        return;
     }
     if (attempts >= maxAttempts) {
-        showEndScreen("lose")
+        showEndScreen("lose");
         return;
     }
     resetGame();
 })
 
 function resetGame() {
+    showModeButtons(false);
     typed = "";
     startTime = null;
     finished = false;
     document.getElementById("results").hidden = true;
+    document.getElementById("game").hidden = false;
     document.getElementById("game").hidden = false;
     updateDisplay();
     updateAttemptDisplay();
@@ -172,6 +205,15 @@ function showEndScreen(reason) {
         ${Math.round(accuracyHistory.reduce((a,b)=>a+b,0) / accuracyHistory.length)}%
     </p>`;
     document.getElementById("share-btn").hidden = false
+    showModeButtons(true);
+    if (mode === "daily") {
+        localStorage.setItem("dailyComplete", JSON.stringify({
+            date: new Date().toISOString().slice(0,10),
+            results: resultHistory,
+            accuracy: accuracyHistory,
+            target: targetWPM
+        }));
+    }
 }
 
 function calculateWPM(characters, elapsedMs) {
@@ -202,8 +244,12 @@ function getBand(wpm, target) {
 }
 
 function updateAttemptDisplay() {
+    if (mode === "unlimited") {
+        document.getElementById("attempt-display").textContent = `unlimited mode`
+    } else {
     document.getElementById("attempt-display").textContent = 
         `attempt: ${attempts + 1} / ${maxAttempts}`;
+    }
 }
 
 document.getElementById("share-btn").addEventListener("click", async () => {
@@ -211,14 +257,15 @@ document.getElementById("share-btn").addEventListener("click", async () => {
         const parts = result.split(" ");
         return `${parts[0]} ${parts[1]}`;
     })
+    const title = 
+        mode === "daily"
+            ? `wpmdle ${new Date().toISOString().slice(0,10)}`
+            : "wpmdle unlimited";
     const shareText = 
-`wpmdle ${new Date().toISOString().slice(0,10)}
+`${title}
 target: ${targetWPM} wpm
 ${results.join(" ")}
-average accuracy: ${Math.round(
-    accuracyHistory.reduce((a,b)=>a+b,0)
-    / accuracyHistory.length
-)}%`.trim();
+average accuracy: ${Math.round(accuracyHistory.reduce((a,b)=>a+b,0) / accuracyHistory.length)}%`
     navigator.clipboard.writeText(shareText);
     alert("copied to clipboard");
 })
@@ -237,3 +284,65 @@ function updateDisplay() {
         }
     })
 }
+
+document.getElementById("daily-btn").addEventListener("click", () => {
+    const saved = JSON.parse(
+        localStorage.getItem("dailyComplete")
+    );
+    const today = new Date().toISOString().slice(0,10)
+    if (saved && saved.date === today) {
+        checkDaily();
+        return;
+    }
+    mode = "daily";
+    attempts = 0;
+    resultHistory = [];
+    accuracyHistory = [];
+    generateTest();
+    loadPassage();
+    document.getElementById("share-btn").hidden = true
+    resetGame();
+})
+
+function showModeButtons(show) {
+    document.getElementById("unlimited-btn").hidden = !show;
+    document.getElementById("daily-btn").hidden = !show;
+}
+
+function checkDaily() {
+    const saved = JSON.parse(
+        localStorage.getItem("dailyComplete")
+    );
+    if (!saved) return;
+    const today = new Date().toISOString().slice(0,10);
+    if (saved.date !== today) {
+        localStorage.removeItem("dailyComplete");
+        return;
+    }
+    mode = "daily"
+    document.getElementById("game").hidden = true;
+    document.getElementById("results").hidden = false;
+    document.getElementById("results").innerHTML = `
+        <h2>daily completed</h2>
+        <p>target: ${saved.target} wpm</p>
+        ${saved.results.map((r,i)=>`
+            <p>${i+1}. ${r} ${saved.accuracy[i]}%</p>
+            `).join("")}
+        <p>
+            average accuracy:
+            ${Math.round(saved.accuracy.reduce((a,b)=>a+b,0) / saved.accuracy.length)}%
+        </p>`;
+}
+
+function startUnlimited() {
+    mode = "unlimited";
+    attempts = 0;
+    resultHistory = [];
+    accuracyHistory = [];
+    document.getElementById("share-btn").hidden = true;
+    generateTest();
+    loadPassage();
+    resetGame();
+}
+
+document.getElementById("unlimited-btn").addEventListener("click", startUnlimited);
