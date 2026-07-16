@@ -1,0 +1,20 @@
+#passage {
+    font-size: 32px;
+    letter-spacing: 1px;
+}
+
+.correct {
+    color: white;
+}
+
+.incorrect {
+    color: #ff5555
+}
+
+.current {
+    border-bottom: 2px solid white
+}
+
+span {
+    color: #666
+}

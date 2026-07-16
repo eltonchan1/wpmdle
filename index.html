@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>wpmdle</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #121213;
+            color: #d7dadc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+        }
+    </style>
+    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>wpmdle</h1>
+    <div id="game">
+        <p id="target-display">target: -- wpm</p>
+        <div id="passage"></div>
+    </div>
+    <div id="results">
+        <h2>results</h2>
+        <p id="wpm-result"></p>
+        <p id="emoji-result"></p>
+        <button id="next-btn">next attempt</button>
+    </div>
+    <button id="share-btn" disabled>share results</button>
+
+    <script>
+        console.log("wired up");
+    </script>
+</body>
+</html>
