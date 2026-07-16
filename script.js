@@ -31,7 +31,7 @@ todaysPassage.split("").forEach(letter => {
     const span = document.createElement("span")
     span.textContent = letter;
     passage.appendChild(span);
-});
+})
 
 document.getElementById("target-display").textContent = `target: ${targetWPM} wpm`;
 
@@ -41,8 +41,13 @@ const spans = passage.querySelectorAll("span");
 let finished = false;
 let attempts = 0;
 const maxAttempts = 5;
+let resultHistory = []
+let accuracyHistory = []
+let currentWPM = 0;
+let currentAccuracy = 0
 
 updateDisplay();
+updateAttemptDisplay();
 
 document.addEventListener("keydown", e => {
     if (finished) return;
@@ -62,7 +67,7 @@ document.addEventListener("keydown", e => {
     updateDisplay();
     if (typed.length === todaysPassage.length)
         finishTest();
-});
+})
 
 function finishTest() {
     finished = true;
@@ -71,31 +76,118 @@ function finishTest() {
         todaysPassage.length,
         elapsed
     );
-    showResultsScreen(wpm);
+    const accuracy = calculateAccuracy();
+    showResultsScreen(wpm, accuracy);
 }
 
-function showResultsScreen(wpm) {
-    const { emoji, direction, won } = getBand(wpm, targetWPM)
+function showResultsScreen(wpm, accuracy) {
+    currentWPM = wpm
+    currentAccuracy = accuracy
+    const {emoji, direction, won } = getBand(wpm, targetWPM)
+    resultHistory.push(`${emoji} ${direction}`)
+    accuracyHistory.push(accuracy);
     document.getElementById("game").hidden = true;
     document.getElementById("results").hidden = false;
-    document.getElementById("wpm-result").textContent = `${wpm} wpm`;
-    document.getElementById("emoji-result").textContent = `${emoji} ${direction}`;
-    resultHistory.push(emoji);
-    attempts++;
+    const resultsDiv = document.getElementById("results");
+    resultsDiv.innerHTML = `
+        <h2>attempt ${attempts + 1}</h2>
+        <p>${wpm} wpm</p>
+        <p>${accuracy}% accuracy</p>
+        <p>${emoji} ${direction}</p>
+        <hr>
+        <h3>history</h3>
+        ${resultHistory.map((result, i) => `
+            <p>
+            ${i + 1}, ${result}
+            ${accuracyHistory[i]}%
+            </p>
+        `).join("")}
+        <hr>
+        <p>
+        average accuracy:
+        ${Math.round(
+            accuracyHistory.reduce((a,b)=>a+b,0)
+            / accuracyHistory.length
+        )}%
+        </p>
+        <button id="next-btn">next attempt</button>`;
+    attempts++
+    updateAttemptDisplay();
     const nextButton = document.getElementById("next-btn");
     if (won) {
-        nextButton.textContent = "done";
-        nextButton.disabled = true;
+        nextButton.textContent = "finish";
     }
     else if (attempts >= maxAttempts) {
         nextButton.textContent = "finish";
-        nextButton.disabled = true;
     }
+    else {
+        nextButton.textContent = "next attempt"
+    }
+}
+
+document.addEventListener("click", e => {
+    if (!e.target.matches("#next-btn")) return;
+    if (getBand(currentWPM, targetWPM).won) {
+        showEndScreen("win");
+        return
+    }
+    if (attempts >= maxAttempts) {
+        showEndScreen("lose")
+        return;
+    }
+    resetGame();
+})
+
+function resetGame() {
+    typed = "";
+    startTime = null;
+    finished = false;
+    document.getElementById("results").hidden = true;
+    document.getElementById("game").hidden = false;
+    updateDisplay();
+    updateAttemptDisplay();
+}
+
+function showEndScreen(reason) {
+    let title;
+    let message;
+    if (reason === "win") {
+        title = "you win!"
+        message = `you got within 1 wpm of the target!`
+    }
+    else {
+        title = "finished"
+        message = `you used up all ${maxAttempts} attempts :(`
+    }
+    document.getElementById("results").innerHTML = `
+    <h2>${title}</h2>
+    <p>${message}</p>
+    <p>${resultHistory.map((result, i) => `
+        <p>
+            ${i + 1}. ${result} ${accuracyHistory[i]}%
+        </p>
+    `).join("")}
+    <p>
+        average accuracy:
+        ${Math.round(accuracyHistory.reduce((a,b)=>a+b,0) / accuracyHistory.length)}%
+    </p>`;
+    document.getElementById("share-btn").hidden = false
 }
 
 function calculateWPM(characters, elapsedMs) {
     const minutes = elapsedMs / 1000 / 60;
     return Math.round((characters / 5) / minutes);
+}
+
+function calculateAccuracy() {
+    if (typed.length === 0) return 0;
+    let correct = 0;
+    for (let i = 0; i < typed.length; i++) {
+        if (typed[i] === todaysPassage[i]) {
+            correct++;
+        }
+    }
+    return Math.round((correct/typed.length) * 100);
 }
 
 function getBand(wpm, target) {
@@ -109,23 +201,24 @@ function getBand(wpm, target) {
     return { emoji, direction, diff, won: diff <= 1 };
 }
 
-function showResult(wpm, target, attemptNum) {
-    const { emoji, direction, won } = getBand(wpm, target);
-    resultHistory.push(emoji);
-    const resultsDiv = document.getElementById("results");
-    resultsDiv.innerHTML += `<p>${emoji} attempt ${attemptNum}: ${wpm} wpm (${direction})</p>`
-    if (won) {
-        resultsDiv.innerHTML += `<p>wow yay you did it</p>`
-    }
-    else if (attemptNum >= maxAttempts) {
-        resultsDiv.innerHTML += `<p>you ran out of tries :(</p>`
-    }
+function updateAttemptDisplay() {
+    document.getElementById("attempt-display").textContent = 
+        `attempt: ${attempts + 1} / ${maxAttempts}`;
 }
 
-let resultHistory = []
-
 document.getElementById("share-btn").addEventListener("click", async () => {
-    const shareText = `wpmdle ${new Date().toISOString().slice(0,10)}\ntarget: ${targetWPM} wpm\n${resultHistory.join(" ")}`;
+    const results = resultHistory.map(result => {
+        const parts = result.split(" ");
+        return `${parts[0]} ${parts[1]}`;
+    })
+    const shareText = 
+`wpmdle ${new Date().toISOString().slice(0,10)}
+target: ${targetWPM} wpm
+${results.join(" ")}
+average accuracy: ${Math.round(
+    accuracyHistory.reduce((a,b)=>a+b,0)
+    / accuracyHistory.length
+)}%`.trim();
     navigator.clipboard.writeText(shareText);
     alert("copied to clipboard");
 })

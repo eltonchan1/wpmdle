@@ -21,15 +21,16 @@
     <h1>wpmdle</h1>
     <div id="game">
         <p id="target-display">target: -- wpm</p>
+        <p id="attempt-display">attempt: x / x</p>
         <div id="passage"></div>
     </div>
-    <div id="results">
+    <div id="results" hidden>
         <h2>results</h2>
         <p id="wpm-result"></p>
         <p id="emoji-result"></p>
         <button id="next-btn">next attempt</button>
     </div>
-    <button id="share-btn" disabled>share results</button>
+    <button id="share-btn" hidden>share results</button>
 
     <script>
         console.log("wired up");
