@@ -1,3 +1,28 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    addDoc,
+    query,
+    orderBy,
+    limit,
+    getDocs,
+    where
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBS-ZJD58Z3drrZvxc-yK4ogNuf7xfmbvU",
+    authDomain: "wpmdle.firebaseapp.com",
+    projectId: "wpmdle",
+    storageBucket: "wpmdle.firebasestorage.app",
+    messagingSenderId: "1039398055507",
+    appId: "1:1039398055507:web:f45cbaf7d56c9e4f62e0a6"
+}
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 function mulberry32(seed) {
     return function() {
         seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
@@ -102,6 +127,8 @@ const passage = document.getElementById("passage");
     await generateTest();
     loadPassage();
     checkDaily();
+    updateDisplay();
+    updateAttemptDisplay();
 })();
 
 function loadPassage() {
@@ -129,8 +156,6 @@ let currentAccuracy = 0;
 let keystrokeHistory = [];
 
 loadPassage();
-updateDisplay();
-updateAttemptDisplay();
 
 document.addEventListener("keydown", e => {
     if (finished) return;
@@ -146,11 +171,12 @@ document.addEventListener("keydown", e => {
         }
         return;
     }
+    const normalizedKey = normalizeChar(e.key);
     keystrokeHistory.push({
-        char: e.key,
+        char: normalizedKey,
         position:typed.length
     });
-    typed += e.key
+    typed += normalizedKey
     updateDisplay();
     if (typed.length === todaysPassage.length)
         finishTest();
@@ -171,7 +197,7 @@ function showResultsScreen(wpm, accuracy) {
     currentWPM = wpm
     currentAccuracy = accuracy
     const {emoji, direction, won } = getBand(wpm, targetWPM)
-    resultHistory.push(`${emoji} ${direction}`)
+    resultHistory.push(`${emoji} ${direction === "exact" ? "=" : direction[0]}`)
     accuracyHistory.push(accuracy);
     document.getElementById("game").hidden = true;
     document.getElementById("results").hidden = false;
@@ -242,18 +268,30 @@ function showEndScreen(reason) {
     let title;
     let message;
     if (reason === "win") {
-        title = "you win!"
-        message = `you got within 1 wpm of the target!`
+        title = "you win!";
+        message = `you got within 1wpm of the target!`;
     }
     else {
-        title = "finished"
+        title = "finished";
         message = `you used up all ${maxAttempts} attempts :(`
+    }
+    let submitHTML = "";
+    if (mode === "daily") {
+        submitHTML = `
+        <input id="username" placeholder="name">
+        <p>please input a name</p>
+        <button id="submit-score">
+        submit
+        </button>`;
+    } else {
+        submitHTML = `
+        <p>unlimited mode scores are not submitted</p>`;
     }
     document.getElementById("results").innerHTML = `
     <h2>${title}</h2>
     <p>${message}</p>
     <hr>
-    <p>${resultHistory.map((result, i) => `
+    ${resultHistory.map((result, i) =>`
         <p>
             ${i + 1}. ${result} ${accuracyHistory[i]}%
         </p>
@@ -261,17 +299,19 @@ function showEndScreen(reason) {
     <hr>
     <p>
         average accuracy:
-        ${Math.round(accuracyHistory.reduce((a,b)=>a+b,0) / accuracyHistory.length)}%
-    </p>`;
-    document.getElementById("share-btn").hidden = false
+        ${Math.round(accuracyHistory.reduce((a,b)=>a+b,0) / accuracyHistory.length)}
+    </p>
+    ${submitHTML}`;
+    document.getElementById("share-btn").hidden = false;
     showModeButtons(true);
     if (mode === "daily") {
         localStorage.setItem("dailyComplete", JSON.stringify({
-            date: getToday(),
-            results: resultHistory,
-            accuracy: accuracyHistory,
-            target: targetWPM
+            date:getToday(),
+            results:resultHistory,
+            accuracy:accuracyHistory,
+            target:targetWPM
         }));
+        document.getElementById("submit-score").onclick = uploadScore;
     }
 }
 
@@ -284,7 +324,7 @@ function calculateAccuracy() {
     if (typed.length === 0) return 0;
     let correct = 0;
     keystrokeHistory.forEach(key => {
-        if (key.char === todaysPassage[key.position]) {
+        if (normalizeChar(key.char) === normalizeChar(todaysPassage[key.position])) {
             correct++;
         }
     })
@@ -336,7 +376,7 @@ function updateDisplay() {
     spans.forEach((span, i) => {
         span.className = "";
         if (i < typed.length) {
-            if (typed[i] === todaysPassage[i])
+            if (normalizeChar(typed[i]) === normalizeChar(todaysPassage[i]))
                 span.classList.add("correct")
             else
                 span.classList.add("incorrect")
@@ -411,14 +451,14 @@ async function startUnlimited() {
 
 document.getElementById("unlimited-btn").addEventListener("click", startUnlimited);
 
-document.getElementById("easy-btn").onclick = () => {
-    document.activeElement.blur();
-    startGame("easy");
+document.getElementById("easy-btn").onclick = async () => {
+    await startGame("easy");
+    await loadLeaderboard();
 }
 
-document.getElementById("hard-btn").onclick = () => {
-    document.activeElement.blur();
-    startGame("hard");
+document.getElementById("hard-btn").onclick = async () => {
+    await startGame("hard");
+    await loadLeaderboard();
 }
 
 async function getWikipediaPassage() {
@@ -438,6 +478,13 @@ function cleanWikipediaText(text) {
         .replace(/…/g, "...") 
         .trim()
         .slice(0, 250)
+}
+
+function normalizeChar(char) {
+    return char
+        .replace(/[–—]/g, "-")
+        .replace(/[‘’]/g, "'")
+        .replace(/[“”]/g, '"')
 }
 
 function updateModeDisplay() {
@@ -475,6 +522,97 @@ async function startGame(newDifficulty) {
 }
 
 function getToday() {
-    return new Date()
-        .toLocaleDateString("en-CA");
+    return new Date().toISOString().slice(0,10);
 }
+
+function calculateRankScore(
+    attempts,
+    results,
+    accuracy
+){
+    let score = 0
+    score += (6-attempts) * 100000
+    results.forEach(result=>{
+        if (result.includes("🟩"))
+            score += 1000;
+        else if (result.includes("🟨"))
+            score += 500
+        else if (result.includes("🟥"))
+            score += 100
+        else
+            score += 10
+    });
+    score += accuracy;
+    return score;
+}
+
+async function uploadScore() {
+    const name = document.getElementById("username").value;
+    const avgAccuracy = Math.round(accuracyHistory.reduce((a,b)=>a+b,0) / accuracyHistory.length);
+    const rankScore = calculateRankScore(
+        attempts,
+        resultHistory,
+        avgAccuracy
+    );
+    try {
+        await addDoc(
+            collection(db, "dailyScores"),
+            {
+                name:name,
+                date:new Date().toISOString().slice(0,10),
+                difficulty:difficulty,
+                attempts:attempts,
+                results:resultHistory,
+                accuracy:avgAccuracy,
+                score:rankScore
+            }
+        );
+        console.log("uploaded");
+    } catch(e) {
+        console.error("upload failed:", e)
+    }
+    alert("submitted")
+    loadLeaderboard();
+}
+
+async function loadLeaderboard() {
+    console.log("loading leaderboard for:", difficulty);
+    const q=query(
+        collection(db,"dailyScores"),
+        where("difficulty", "==", difficulty),
+        where("date", "==", getToday()),
+        orderBy("score","desc"),
+        limit(100)
+    );
+    const snapshot = await getDocs(q);
+    console.log("documents:", snapshot.size);
+    let html = "<h2>leaderboard</h2>";
+    let rank = 1;
+    snapshot.forEach(doc=>{
+        const data=doc.data();
+        const cleanResults = data.results.map(result => {
+            const parts = result.split(" ")
+            if (result.includes("too fast")) {
+                return result.split(" ")[0] + result.split(" ")[1] + " ";
+            }
+            if (result.includes("too slow")) {
+                return result.split(" ")[0] + result.split(" ")[1] + " ";
+            }
+            if (result.includes("exact")) {
+                return result.split(" ")[0] + "="
+            }
+            return `${parts[0]}${parts[1]} `;
+        })
+        html+=`
+        <p>
+        ${rank}.
+        ${data.name}
+        ${cleanResults.join("")}
+        ${data.accuracy}%
+        </p>
+        `;
+        rank++;
+    });
+    document.getElementById("leaderboard").innerHTML = html;
+}
+loadLeaderboard();
