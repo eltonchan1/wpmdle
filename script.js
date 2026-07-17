@@ -103,6 +103,7 @@ let targetWPM;
 let mode = "daily";
 let difficulty = "easy"
 const cursor = document.getElementById("cursor");
+let wpmHistory = [];
 
 async function generateTest() {
     let rng;
@@ -211,23 +212,36 @@ function finishTest() {
 function showResultsScreen(wpm, accuracy) {
     currentWPM = wpm
     currentAccuracy = accuracy
+    wpmHistory.push(wpm);
     const {emoji, direction, won } = getBand(wpm, targetWPM)
-    resultHistory.push(`${emoji} ${direction === "exact" ? "=" : direction[0]}`)
+    resultHistory.push({
+        emoji: emoji,
+        direction: direction === "exact" ? "=" : direction[0],
+        wpm: wpm,
+        accuracy: accuracy
+    })
     accuracyHistory.push(accuracy);
     document.getElementById("game").hidden = true;
     document.getElementById("results").hidden = false;
     const resultsDiv = document.getElementById("results");
     resultsDiv.innerHTML = `
         <h2>attempt ${attempts + 1}</h2>
-        <p>${wpm} wpm</p>
-        <p>${accuracy}% accuracy</p>
-        <p>${emoji} ${direction}</p>
+        <div class="result-layout">
+            <div class="result-stats">
+                <p>${wpm} wpm</p>
+                <p>${accuracy}% accuracy</p>
+                <p>${emoji} ${direction}</p>
+            </div>
+            <div class="chart-container">
+                <canvas id="wpm-chart"></canvas>
+            </div>
+        </div>
+
         <hr>
         <h3>history</h3>
         ${resultHistory.map((result, i) => `
             <p>
-            ${i + 1}. ${result}
-            ${accuracyHistory[i]}%
+            ${i + 1}. ${result.emoji} ${result.direction} ${result.wpm} wpm ${result.accuracy}%
             </p>
         `).join("")}
         <hr>
@@ -251,6 +265,7 @@ function showResultsScreen(wpm, accuracy) {
     else {
         nextButton.textContent = "next attempt"
     }
+    updateWPMChart();
 }
 
 document.addEventListener("click", e => {
@@ -306,19 +321,29 @@ function showEndScreen(reason) {
     <h2>${title}</h2>
     <p>${message}</p>
     <hr>
-    ${resultHistory.map((result, i) =>`
-        <p>
-            ${i + 1}. ${result} ${accuracyHistory[i]}%
-        </p>
-    `).join("")}
-    <hr>
-    <p>
-        average accuracy:
-        ${Math.round(accuracyHistory.reduce((a,b)=>a+b,0) / accuracyHistory.length)}%
-    </p>
+    <div class="end-layout">
+        <div class="history">
+            <h3>history</h3>
+            ${resultHistory.map((result, i) =>`
+                <p>
+                    ${i + 1}. ${result.emoji} ${result.direction} ${result.wpm} wpm ${result.accuracy}%
+                </p>
+            `).join("")}
+            <hr>
+            <p>
+                average accuracy:
+                ${Math.round(
+                    accuracyHistory.reduce((a,b)=>a+b,0) 
+                    / accuracyHistory.length
+                )}%
+            </p>
+        </div>
+        <canvas id="wpm-chart"></canvas>
+    </div>
     ${submitHTML}`;
     document.getElementById("share-btn").hidden = false;
     showModeButtons(true);
+    updateWPMChart();
     if (mode === "daily") {
         localStorage.setItem("dailyComplete", JSON.stringify({
             date:getToday(),
@@ -371,15 +396,14 @@ function updateAttemptDisplay() {
 
 document.getElementById("share-btn").addEventListener("click", async () => {
     const results = resultHistory.map(result => {
-        const parts = result.split(" ");
-        return `${parts[0]} ${parts[1]}`;
+        return `${result.emoji} ${result.direction}`;
     })
     const title = 
         mode === "daily"
             ? `wpmdle ${getToday()}`
             : "wpmdle unlimited";
     const shareText = 
-`${title}
+`${title} ${difficulty}
 target: ${targetWPM} wpm
 ${results.join(" ")}
 average accuracy: ${Math.round(accuracyHistory.reduce((a,b)=>a+b,0) / accuracyHistory.length)}%`
@@ -459,6 +483,7 @@ async function startUnlimited() {
     attempts = 0;
     resultHistory = [];
     accuracyHistory = [];
+    wpmHistory = [];
     document.getElementById("share-btn").hidden = true;
     await generateTest();
     loadPassage();
@@ -530,6 +555,7 @@ async function startGame(newDifficulty) {
     resultHistory = [];
     accuracyHistory = [];
     keystrokeHistory = [];
+    wpmHistory = [];
     typed = "";
     startTime = null;
     finished = false;
@@ -555,11 +581,11 @@ function calculateRankScore(
     let score = 0
     score += (6-attempts) * 100000
     results.forEach(result=>{
-        if (result.includes("🟩"))
+        if (result.emoji === "🟩")
             score += 1000;
-        else if (result.includes("🟨"))
+        else if (result.emoji === "🟨")
             score += 500
-        else if (result.includes("🟥"))
+        else if (result.emoji === "🟥")
             score += 100
         else
             score += 10
@@ -658,4 +684,93 @@ function resetCursorBlink() {
     cursorTimeout = setTimeout(() => {
         cursor.classList.add("blink");
     }, 1000);
+}
+
+let wpmChart;
+
+function updateWPMChart() {
+    const ctx = document.getElementById("wpm-chart");
+    if (wpmChart) {
+        wpmChart.destroy();
+    }
+    wpmChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: wpmHistory.map((_, i) => `attempt ${i + 1}`),
+            datasets: [{
+                label: "wpm",
+                data: wpmHistory,
+                borderColor: "#e2b714",
+                backgroundColor: "transparent",
+                tension: 0.3,
+                pointRadius: 5
+            },
+            {
+                label: "Target",
+                data: wpmHistory.map(() => targetWPM),
+                borderColor: "#ca4754",
+                borderDash: [8, 8],
+                pointRadius: 0,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false,
+                    labels: {
+                        color: "#d1c0c5",
+                        font: {
+                            family: "JetBrains Mono",
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    titleFont: {
+                        family: "JetBrains Mono"
+                    },
+                    bodyFont: {
+                        family: "JetBrains Mono"
+                    },
+                    titleColor: "#d1d0c5",
+                    bodyColor: "#d1d0c5"
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: "#d1d0c5",
+                        font: {
+                            family: "JetBrains Mono",
+                            size: 11
+                        }
+                    },
+                    grid: {
+                        color: "#444"
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: "#d1d0c5",
+                        font: {
+                            family: "JetBrains Mono",
+                            size: 11
+                        }
+                    },
+                    grid: {
+                        color: "#444"
+                    },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
 }

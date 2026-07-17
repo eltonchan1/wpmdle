@@ -149,3 +149,40 @@ html, body {
 #passage {
     position: relative;
 }
+
+#wpm-chart {
+    width: 300px !important;
+    height: 150px !important;
+}
+
+.result-layout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+}
+
+.result-stats {
+    text-align: left;
+}
+
+.chart-container {
+    width: 350px;
+    height: 180px;
+}
+
+.end-layout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+}
+
+.history {
+    text-align: left;
+}
+
+#wpm-chart {
+    width: 300px !important;
+    height: 180px !important;
+}
