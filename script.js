@@ -107,6 +107,12 @@ let wpmHistory = [];
 const popup = document.getElementById("info-popup");
 const closePopup = document.getElementById("close-popup");
 const infoBtn = document.getElementById("info-btn");
+const creditsPopup = document.getElementById("credits-popup");
+const creditsBtn = document.getElementById("credits-btn");
+const closeCredits = document.getElementById("close-credits");
+const settingsBtn = document.getElementById("settings-btn");
+const settingsPopup = document.getElementById("settings-popup");
+const closeSettings = document.getElementById("close-settings");
 
 if (localStorage.getItem("seenInfo")) {
     popup.hidden = true;
@@ -120,6 +126,22 @@ closePopup.addEventListener("click", () => {
 infoBtn.addEventListener("click", () => {
     popup.hidden = false;
 })
+
+creditsBtn.addEventListener("click", () => {
+    creditsPopup.hidden = false;
+})
+
+closeCredits.addEventListener("click", () => {
+    creditsPopup.hidden = true;
+})
+
+settingsBtn.onclick = () => {
+    settingsPopup.hidden = false;
+}
+
+closeSettings.onclick = () => {
+    settingsPopup.hidden = true;
+}
 
 async function generateTest() {
     let rng;
@@ -704,6 +726,12 @@ function resetCursorBlink() {
     }, 1000);
 }
 
+function getCSSVariable(name) {
+    return getComputedStyle(document.documentElement)
+        .getPropertyValue(name)
+        .trim();
+}
+
 let wpmChart;
 
 function updateWPMChart() {
@@ -726,7 +754,7 @@ function updateWPMChart() {
             datasets: [{
                 label: "wpm",
                 data: chartData,
-                borderColor: "#e2b714",
+                borderColor: getCSSVariable("--accent"),
                 backgroundColor: "transparent",
                 tension: 0.3,
                 pointRadius: 5
@@ -734,7 +762,7 @@ function updateWPMChart() {
             {
                 label: "Target",
                 data: chartData.map(() => targetWPM),
-                borderColor: "#ca4754",
+                borderColor: getCSSVariable("--error"),
                 borderDash: [8, 8],
                 pointRadius: 0,
                 fill: false
@@ -752,7 +780,7 @@ function updateWPMChart() {
                 legend: {
                     display: false,
                     labels: {
-                        color: "#d1c0c5",
+                        color: getCSSVariable("--text"),
                         font: {
                             family: "JetBrains Mono",
                             size: 16
@@ -766,33 +794,33 @@ function updateWPMChart() {
                     bodyFont: {
                         family: "JetBrains Mono"
                     },
-                    titleColor: "#d1d0c5",
-                    bodyColor: "#d1d0c5"
+                    titleColor: getCSSVariable("--text"),
+                    bodyColor: getCSSVariable("--text"),
                 }
             },
             scales: {
                 x: {
                     ticks: {
-                        color: "#d1d0c5",
+                        color: getCSSVariable("--text"),
                         font: {
                             family: "JetBrains Mono",
                             size: 16
                         }
                     },
                     grid: {
-                        color: "#444"
+                        color: getCSSVariable("--secondary"),
                     }
                 },
                 y: {
                     ticks: {
-                        color: "#d1d0c5",
+                        color: getCSSVariable("--text"),
                         font: {
                             family: "JetBrains Mono",
                             size: 16
                         }
                     },
                     grid: {
-                        color: "#444"
+                        color: getCSSVariable("--secondary"),
                     },
                     beginAtZero: true
                 }
@@ -801,9 +829,67 @@ function updateWPMChart() {
     });
 }
 
+document.getElementById("monkeytype-theme").onclick = () => setTheme("monkeytype");
+document.getElementById("light-theme").onclick = () => setTheme("light");
+document.getElementById("forest-theme").onclick = () => setTheme("forest");
+document.getElementById("matrix-theme").onclick = () => setTheme("matrix");
+
+function setTheme(theme) {
+    localStorage.setItem("theme", theme)
+    const root = document.documentElement;
+    if (theme === "monkeytype") {
+        root.style.setProperty("--bg", "#323437");
+        root.style.setProperty("--text", "#d1d0c5");
+        root.style.setProperty("--accent", "#e2b714");
+        root.style.setProperty("--secondary", "#646669");
+        root.style.setProperty("--button", "#44464a");
+        root.style.setProperty("--error", "#ca4754");
+    }
+    if (theme === "light") {
+        root.style.setProperty("--bg", "#ffffff");
+        root.style.setProperty("--text", "#323437");
+        root.style.setProperty("--accent", "#6dbb45");
+        root.style.setProperty("--secondary", "#8a9f8a");
+        root.style.setProperty("--button", "#dcdcdcdc");
+        root.style.setProperty("--error", "#d9534f");
+    }
+    if (theme === "forest") {
+        root.style.setProperty("--bg", "#1b2b1b");
+        root.style.setProperty("--text", "#d8e8d8");
+        root.style.setProperty("--accent", "#6dbb45");
+        root.style.setProperty("--secondary", "#8a9f8a");
+        root.style.setProperty("--button", "#304830");
+        root.style.setProperty("--error", "#d9534f");
+    }
+    if (theme === "matrix") {
+        root.style.setProperty("--bg", "#000000");
+        root.style.setProperty("--text", "#00ff66");
+        root.style.setProperty("--accent", "#00ff66");
+        root.style.setProperty("--secondary", "#009933");
+        root.style.setProperty("--button", "#003311");
+        root.style.setProperty("--error", "#ff3333");
+    }
+}
+
+const savedTheme = localStorage.getItem("theme");
+
+if (savedTheme) {
+    setTheme(savedTheme);
+}
+
 /* emojis here for future use
     if (diff <= 1) emoji = "🟩"
     else if (diff <= 5) emoji = "🟨"
     else if (diff <= 15) emoji = "🟥"
     else emoji = "⬛"
+*/
+/*
+    if (theme === "default") {
+        root.style.setProperty("--bg", "#323437");
+        root.style.setProperty("--text", "#d1d0c5");
+        root.style.setProperty("--accent", "#e2b714");
+        root.style.setProperty("--secondary", "#646669");
+        root.style.setProperty("--button", "#44464a");
+        root.style.setProperty("--error", "#ca4754");
+    }
 */

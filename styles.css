@@ -1,3 +1,12 @@
+:root {
+    --bg: #323437;
+    --text: #d1d0c5;
+    --accent: #e2b714;
+    --secondary: #646669;
+    --button: #44464a;
+    --error:#ca4754;
+}
+
 * {
     font-family: "JetBrains Mono", monospace;
 }
@@ -6,7 +15,7 @@
     margin-top: 15px;
     font-size: 34px;
     line-height: 1.8;
-    color: #646669;
+    color: var(--secondary);
     user-select: none;
     white-space: pre-wrap;
     word-break: break-word;
@@ -17,15 +26,15 @@
 }
 
 .correct {
-    color: #d1d0c5
+    color: var(--text);
 }
 
 .incorrect {
-    color: #ca4754;
+    color: var(--error)
 }
 
 span {
-    color: #666
+    color: var(--secondary)
 }
 
 body {
@@ -34,15 +43,14 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: #323437;
-    color: #d1d0c5;
+    background: var(--bg);
+    color: var(--text);
     font-family: "JetBrainsMono", monospace;
 }
 
 h1 {
     margin-top: 10px;
     margin-bottom: 10px;
-    color: #e2b714;
     font-size: 48px;
     font-weight: 700px;
 }
@@ -54,14 +62,14 @@ h1 {
 
 #target-display,
 #attempt-display {
-    color: #646669;
+    color: var(--secondary);
     font-size: 18px;
     margin: 8px 0;
 }
 
 button {
-    background: #44464a;
-    color: #d1d0c5;
+    background: var(--button);
+    color: var(--text);
     border: none;
     border-radius: 8px;
     padding: 12px 26px;
@@ -75,8 +83,8 @@ button {
 }
 
 button:hover {
-    background: #e2b714;
-    color: #323437;
+    background: var(--accent);
+    color: var(--bg);
 }
 
 button:active {
@@ -99,19 +107,18 @@ button:disabled {
 }
 
 #results h2 {
-    color: #e2b714;
     font-size: 36px;
 }
 
 #results p {
-    color: #d1d0c5;
+    color: var(--text);
     font-size: 20px;
 }
 
 hr {
     border: none;
     height: 1px;
-    background: #555;
+    background: var(--secondary);
     margin: 25px 0;
 }
 
@@ -201,8 +208,8 @@ html, body {
 }
 
 .popup {
-    background: #323437;
-    color: #d1d0c5;
+    background: var(--bg);
+    color: var(--text);
     width: min(500px, 90vw);
     padding: 30px;
     border-radius: 10px;
@@ -210,7 +217,6 @@ html, body {
 }
 
 .popup h2 {
-    color: #e2b714;
     font-size: 32px;
     margin-top: 0;
 }
@@ -230,11 +236,48 @@ html, body {
     padding: 0;
     font-size: 24px;
     font-weight: bold;
-    background: #44464a;
-    color: #d1d0c5;
+    background: var(--button);
+    color: var(--text);
 }
 
 .info-button:hover {
-    background: #e2b714;
-    color: #323437;
+    background: var(--accent);
+    color: var(--bg);
+}
+
+.credits-button {
+    position: fixed;
+    bottom: 20px;
+    left: 75px;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 30px;
+    font-weight: bold;
+    background: var(--button);
+    color: var(--text);
+}
+
+.credits-button:hover {
+    background: var(--accent);
+    color: var(--bg);
+}
+
+h1,
+.popup h2,
+.popup h3,
+#results h2 {
+    color: var(--accent)
+}
+
+.settings-button {
+    position: fixed;
+    bottom: 20px;
+    left: 130px;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 24px;
 }
