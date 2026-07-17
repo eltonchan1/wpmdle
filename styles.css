@@ -3,7 +3,7 @@
 }
 
 #passage {
-    margin-top: 35px;
+    margin-top: 15px;
     font-size: 34px;
     line-height: 1.8;
     color: #646669;
@@ -40,8 +40,8 @@ body {
 }
 
 h1 {
-    margin-top: 50px;
-    margin-bottom: 40px;
+    margin-top: 10px;
+    margin-bottom: 10px;
     color: #e2b714;
     font-size: 48px;
     font-weight: 700px;
@@ -150,39 +150,72 @@ html, body {
     position: relative;
 }
 
-#wpm-chart {
-    width: 300px !important;
-    height: 150px !important;
-}
-
-.result-layout {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 40px;
-}
-
 .result-stats {
     text-align: left;
 }
 
 .chart-container {
-    width: 350px;
-    height: 180px;
-}
-
-.end-layout {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 40px;
+    width: 100%;
+    height: 300px;
 }
 
 .history {
     text-align: left;
 }
 
-#wpm-chart {
-    width: 300px !important;
-    height: 180px !important;
+.end-layout canvas {
+    width: 100% !important;
+    height: 300px !important;
+}
+
+.chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.result-layout,
+.end-layout {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 40px;
+    align-items: center;
+}
+
+.end-layout .chart-container {
+    width: 100%;
+    height: 300px;
+}
+
+.popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup-overlay[hidden] {
+    display: none;
+}
+
+.popup {
+    background: #323437;
+    color: #d1d0c5;
+    width: min(500px, 90vw);
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.popup h2 {
+    color: #e2b714;
+    font-size: 32px;
+    margin-top: 0;
+}
+
+.popup p {
+    font-size: 18px;
+    line-height: 1.6;
 }

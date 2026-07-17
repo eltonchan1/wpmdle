@@ -52,5 +52,20 @@
     <script>
         console.log("wired up");
     </script>
+
+    <div id="info-popup" class="popup-overlay" hidden>
+        <div class="popup">
+            <h2>how to play</h2>
+            <p>type the passage as quickly and accurately as possible</p>
+            <p>you have 5 tries to get within 1wpm of the target</p>
+            <p>
+                🟩 = within 1 wpm<br>
+                🟨 = within 5 wpm<br>
+                🟥 = within 15 wpm<br>
+                ⬛ = too far away
+            </p>
+            <button id="close-popup">got it</button>
+        </div>
+    </div>
 </body>
 </html>

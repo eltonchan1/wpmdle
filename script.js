@@ -104,6 +104,17 @@ let mode = "daily";
 let difficulty = "easy"
 const cursor = document.getElementById("cursor");
 let wpmHistory = [];
+const popup = document.getElementById("info-popup");
+const closePopup = document.getElementById("close-popup");
+
+if (localStorage.getItem("seenInfo")) {
+    popup.hidden = true;
+}
+
+closePopup.addEventListener("click", () => {
+    popup.hidden = true;
+    localStorage.setItem("seenInfo", "true");
+})
 
 async function generateTest() {
     let rng;
@@ -329,7 +340,6 @@ function showEndScreen(reason) {
                     ${i + 1}. ${result.emoji} ${result.direction} ${result.wpm} wpm ${result.accuracy}%
                 </p>
             `).join("")}
-            <hr>
             <p>
                 average accuracy:
                 ${Math.round(
@@ -338,8 +348,11 @@ function showEndScreen(reason) {
                 )}%
             </p>
         </div>
-        <canvas id="wpm-chart"></canvas>
+        <div class="chart-container">
+            <canvas id="wpm-chart"></canvas>
+        </div>
     </div>
+    <hr>
     ${submitHTML}`;
     document.getElementById("share-btn").hidden = false;
     showModeButtons(true);
@@ -470,7 +483,7 @@ function checkDaily() {
         <h2>daily completed</h2>
         <p>target: ${saved.target} wpm</p>
         ${saved.results.map((r,i)=>`
-            <p>${i+1}. ${r} ${saved.accuracy[i]}%</p>
+            <p>${i+1}. ${r.emoji} ${r.direction} ${r.wpm} wpm ${saved.accuracy[i]}%</p>
             `).join("")}
         <p>
             average accuracy:
@@ -690,16 +703,24 @@ let wpmChart;
 
 function updateWPMChart() {
     const ctx = document.getElementById("wpm-chart");
+    let chartData = [...wpmHistory];
+    if (chartData.length === 1) {
+        chartData.push(wpmHistory[0]);
+    }
+    let chartLabels = wpmHistory.map((_, i) => `attempt ${i + 1}`);
+    if (chartLabels.length === 1) {
+        chartLabels.push("");
+    }
     if (wpmChart) {
         wpmChart.destroy();
     }
     wpmChart = new Chart(ctx, {
         type: "line",
         data: {
-            labels: wpmHistory.map((_, i) => `attempt ${i + 1}`),
+            labels: chartLabels,
             datasets: [{
                 label: "wpm",
-                data: wpmHistory,
+                data: chartData,
                 borderColor: "#e2b714",
                 backgroundColor: "transparent",
                 tension: 0.3,
@@ -707,7 +728,7 @@ function updateWPMChart() {
             },
             {
                 label: "Target",
-                data: wpmHistory.map(() => targetWPM),
+                data: chartData.map(() => targetWPM),
                 borderColor: "#ca4754",
                 borderDash: [8, 8],
                 pointRadius: 0,
@@ -729,7 +750,7 @@ function updateWPMChart() {
                         color: "#d1c0c5",
                         font: {
                             family: "JetBrains Mono",
-                            size: 12
+                            size: 16
                         }
                     }
                 },
@@ -750,7 +771,7 @@ function updateWPMChart() {
                         color: "#d1d0c5",
                         font: {
                             family: "JetBrains Mono",
-                            size: 11
+                            size: 16
                         }
                     },
                     grid: {
@@ -762,7 +783,7 @@ function updateWPMChart() {
                         color: "#d1d0c5",
                         font: {
                             family: "JetBrains Mono",
-                            size: 11
+                            size: 16
                         }
                     },
                     grid: {
@@ -774,3 +795,10 @@ function updateWPMChart() {
         }
     });
 }
+
+/* emojis here for future use
+    if (diff <= 1) emoji = "🟩"
+    else if (diff <= 5) emoji = "🟨"
+    else if (diff <= 15) emoji = "🟥"
+    else emoji = "⬛"
+*/
