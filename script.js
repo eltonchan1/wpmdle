@@ -106,6 +106,7 @@ const cursor = document.getElementById("cursor");
 let wpmHistory = [];
 const popup = document.getElementById("info-popup");
 const closePopup = document.getElementById("close-popup");
+const infoBtn = document.getElementById("info-btn");
 
 if (localStorage.getItem("seenInfo")) {
     popup.hidden = true;
@@ -114,6 +115,10 @@ if (localStorage.getItem("seenInfo")) {
 closePopup.addEventListener("click", () => {
     popup.hidden = true;
     localStorage.setItem("seenInfo", "true");
+})
+
+infoBtn.addEventListener("click", () => {
+    popup.hidden = false;
 })
 
 async function generateTest() {
