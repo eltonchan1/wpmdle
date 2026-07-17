@@ -12,28 +12,16 @@
     word-break: break-word;
 }
 
+#passage span {
+    transition: transform 0.08s ease;
+}
+
 .correct {
     color: #d1d0c5
 }
 
 .incorrect {
     color: #ca4754;
-}
-
-.current {
-    border-left: 2px solid #e2b714;
-    animation: blink 1s infinite;
-}
-
-@keyframes blink {
-    0%,
-    50% {
-        border-color: e2b714;
-    }
-    51%,
-    100% {
-        border-color: transparent;
-    }
 }
 
 span {
@@ -137,4 +125,27 @@ html, body {
 #leaderboard-container {
     max-height: 400px;
     overflow-y: auto;
+}
+
+#cursor {
+    position: absolute;
+    width: 2px;
+    background: white;
+    pointer-events: none;
+    transition: left 0.12s ease, top 0.12s ease;
+    will-change: left, top;
+}
+
+#cursor.blink {
+    animation: blink 1s steps(2, start) infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+#passage {
+    position: relative;
 }

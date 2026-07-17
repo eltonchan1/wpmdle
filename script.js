@@ -102,6 +102,7 @@ let todaysPassage;
 let targetWPM;
 let mode = "daily";
 let difficulty = "easy"
+const cursor = document.getElementById("cursor");
 
 async function generateTest() {
     let rng;
@@ -138,7 +139,9 @@ function loadPassage() {
         span.textContent = letter;
         passage.appendChild(span);
     });
+    passage.appendChild(cursor);
     spans = passage.querySelectorAll("span");
+    updateCursor();
 }
 
 document.getElementById("target-display").textContent = `target: ${targetWPM} wpm`;
@@ -154,8 +157,6 @@ let accuracyHistory = [];
 let currentWPM = 0;
 let currentAccuracy = 0;
 let keystrokeHistory = [];
-
-loadPassage();
 
 document.addEventListener("keydown", e => {
     if (finished) return;
@@ -191,6 +192,7 @@ document.addEventListener("keydown", e => {
     });
     typed += normalizedKey
     updateDisplay();
+    resetCursorBlink();
     if (typed.length === todaysPassage.length)
         finishTest();
 })
@@ -397,7 +399,8 @@ function updateDisplay() {
         else if (i === typed.length) {
             span.classList.add("current")
         }
-    })
+    });
+    updateCursor();
 }
 
 document.getElementById("daily-btn").addEventListener("click", async () => {
@@ -634,4 +637,25 @@ async function loadLeaderboard() {
     });
     document.getElementById("leaderboard").innerHTML = html;
 }
+
 loadLeaderboard();
+
+function updateCursor() {
+    if (finished || !spans[typed.length]) return;
+    const current = spans[typed.length];
+    const rect = current.getBoundingClientRect();
+    const parentRect = passage.getBoundingClientRect();
+    cursor.style.left = `${rect.left - parentRect.left}px`;
+    cursor.style.top = `${rect.top - parentRect.top}px`;
+    cursor.style.height = `${rect.height}px`;
+}
+
+let cursorTimeout;
+
+function resetCursorBlink() {
+    cursor.classList.remove("blink");
+    clearTimeout(cursorTimeout);
+    cursorTimeout = setTimeout(() => {
+        cursor.classList.add("blink");
+    }, 1000);
+}
