@@ -159,16 +159,29 @@ loadPassage();
 
 document.addEventListener("keydown", e => {
     if (finished) return;
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.altKey) return;
+    if ((e.ctrlKey || e.metaKey) && e.key !== "Backspace") {
+        return;
+    }
     if (typed.length >= todaysPassage.length) return;
     if (e.key.length !== 1 && e.key !== "Backspace") return;
     if (startTime === null)
         startTime = Date.now();
     if (e.key === "Backspace") {
-        if (typed.length > 0) {
-            typed = typed.slice(0, -1);
-            updateDisplay();
+        e.preventDefault();
+        if (typed.length === 0) return;
+        if (e.ctrlKey || e.metaKey) {
+            while (typed.endsWith(" ")) {
+                typed = typed.slice(0, -1);
+            }
+            while (typed.length > 0 && !typed.endsWith(" ")) {
+                typed = typed.slice(0, -1);
+            }
+        } else {
+            typed = typed.slice(0, -1)
         }
+        keystrokeHistory.length = typed.length;
+        updateDisplay();
         return;
     }
     const normalizedKey = normalizeChar(e.key);
