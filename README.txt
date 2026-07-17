@@ -1,4 +1,3 @@
-
 # wpmdle
 
 a daily typing challenge inspired by wordle and monkeytype
