@@ -299,7 +299,7 @@ function showEndScreen(reason) {
     <hr>
     <p>
         average accuracy:
-        ${Math.round(accuracyHistory.reduce((a,b)=>a+b,0) / accuracyHistory.length)}
+        ${Math.round(accuracyHistory.reduce((a,b)=>a+b,0) / accuracyHistory.length)}%
     </p>
     ${submitHTML}`;
     document.getElementById("share-btn").hidden = false;
@@ -470,18 +470,24 @@ async function getWikipediaPassage() {
 
 function cleanWikipediaText(text) {
     return text
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
         .replace(/\n/g, " ")
         .replace(/\s/g, " ")
         .replace(/[–—]/g, "-")
         .replace(/[‘’]/g, "'")
         .replace(/[“”]/g, '"')
         .replace(/…/g, "...") 
+        .replace(/[^\x20-\x7E]/g, "")
+        .replace(/\s+/g, " ")
         .trim()
         .slice(0, 250)
 }
 
 function normalizeChar(char) {
     return char
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
         .replace(/[–—]/g, "-")
         .replace(/[‘’]/g, "'")
         .replace(/[“”]/g, '"')
