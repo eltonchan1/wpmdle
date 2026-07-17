@@ -679,18 +679,12 @@ async function loadLeaderboard() {
     snapshot.forEach(doc=>{
         const data=doc.data();
         const cleanResults = data.results.map(result => {
-            const parts = result.split(" ")
-            if (result.includes("too fast")) {
-                return result.split(" ")[0] + result.split(" ")[1] + " ";
+            if (typeof result === "string") {
+                const parts = result.split(" ");
+                return parts[0] + parts[1] + " ";
             }
-            if (result.includes("too slow")) {
-                return result.split(" ")[0] + result.split(" ")[1] + " ";
-            }
-            if (result.includes("exact")) {
-                return result.split(" ")[0] + "="
-            }
-            return `${parts[0]}${parts[1]} `;
-        })
+            return `${result.emoji}${result.direction} `;
+        });
         html+=`
         <p>
         ${rank}.
